@@ -4,12 +4,12 @@ import streamlit as st
 from urllib.parse import quote
 
 import ui
-from core.llm import parse_supplier_list, generate_message, ask_agent
+from core.llm import parse_supplier_list, generate_message
 from core.matcher import load_products, match_items
 from core.margins import build_report, summary
 from core.db import apply_changes, replace_products
 from data.seed import seed
-
+from core.agent import run_agent
 import os
 if not os.path.exists("shop.db"):
     seed()
@@ -71,7 +71,9 @@ def load_sample():
     ).read()
 
 
-tab1, tab2, tab3 = st.tabs([" Analyze", " Shop inventory", " Ask the agent"])
+tab4, tab1, tab2 = st.tabs(
+    [" Agent mode", " Review & approve", " Shop inventory"]
+)
 
 # ---------- inventory tab ----------
 with tab2:
@@ -114,6 +116,8 @@ with tab2:
 # ---------- analyze tab ----------
 with tab1:
     st.subheader("1. Paste supplier price list")
+    st.caption("Quick mode: paste a list here for a direct analysis. "
+               "Or run Agent mode first and send its result here for approval.")
     st.text_area("Supplier list", key="supplier_text", height=200,
                  placeholder="Paste the WhatsApp price list here...",
                  label_visibility="collapsed")
@@ -224,44 +228,87 @@ with tab1:
             st.link_button("Open in WhatsApp", "https://wa.me/?text=" + quote(res["msg"]))
             st.caption("AI-generated. The owner reviews and sends it. The app never sends messages by itself.")
 
-# ---------- what-if agent tab ----------
-with tab3:
-    st.subheader(" Ask the agent (what-if)")
-    st.caption("The AI calls a Python tool to do the math, then explains the result.")
-    st.info(
-        "**You can ask:** what-if questions about cost or dollar increases, with a percentage.\n\n"
-        "Examples: *If the dollar rises 5%, which items start losing money?* · "
-        "*What happens to my margins if costs rise 10%?*\n\n"
-        "Other questions are not supported yet."
-    )
 
-    ex1 = "If the dollar rises 5%, which items start losing money?"
-    ex2 = "What happens to my margins if costs rise 10%?"
-    b1, b2 = st.columns(2)
-    if b1.button(ex1, key="ex1"):
-        st.session_state.q = ex1
-    if b2.button(ex2, key="ex2"):
-        st.session_state.q = ex2
+# ---------- agent mode tab ----------
+def _describe(step):
+    t, r = step["tool"], step["result"]
+    if "error" in r:
+        return f" {r['error']}"
+    if t == "parse_supplier_list":
+        return f"Read {r['items_found']} items from the supplier list"
+    if t == "match_products":
+        return (f"{r['matched_automatically']} matched automatically, "
+                f"{len(r['needs_owner_confirmation'])} need confirmation, "
+                f"{len(r['unmatched'])} unmatched")
+    if t == "compute_margins":
+        sm = r["summary"]
+        return f"{sm['loss_items']} losing money, {sm['low_margin_items']} below minimum margin"
+    if t == "simulate_cost_increase":
+        return (f"If costs rise {r['cost_increase_percent']:.0f}%: "
+                f"{r['items_at_risk']} items at risk, {r['items_newly_at_risk']} newly")
+    return ""
 
-    q = st.text_input("Your question", key="q")
-    if st.button("Ask", type="primary", key="ask_btn"):
-        st.session_state.agent_out = None          # purana jawab saaf
-        if not q.strip():
-            st.error("Type a question first.")
+
+with tab4:
+    st.subheader(" Agent mode")
+    st.caption("Tell the agent what you need. It decides which tools to call, in what order, "
+               "and reports back. It never changes prices: you approve in the Review & approve tab.")
+
+    st.markdown("**1. Supplier list** (optional for what-if questions)")
+    if st.button("Load sample list", key="agent_load"):
+        st.session_state.agent_text = open("data/supplier_sample.txt", encoding="utf-8").read()
+    st.text_area("Supplier list", key="agent_text", height=150,
+                 placeholder="Paste the supplier's price list here...",
+                 label_visibility="collapsed")
+
+    st.markdown("**2. What do you want?**")
+    ex = ["Analyze this list and tell me what needs my attention",
+          "Which items from this list lose money? Only tell me about the SSDs",
+          "What happens if the dollar rises 10%?"]
+    e1, e2, e3 = st.columns(3)
+    if e1.button("Full analysis", key="ex_a"):
+        st.session_state.agent_req = ex[0]
+    if e2.button("SSDs only", key="ex_b"):
+        st.session_state.agent_req = ex[1]
+    if e3.button("Dollar +10%", key="ex_c"):
+        st.session_state.agent_req = ex[2]
+    st.text_input("Your request", key="agent_req",
+                  placeholder="e.g. What happens if the dollar rises 8%?",
+                  label_visibility="collapsed")
+
+    if st.button("Run agent", type="primary", key="agent_run"):
+        txt = st.session_state.get("agent_text", "").strip()
+        req = st.session_state.get("agent_req", "").strip()
+        if not txt and not req:
+            st.error("Paste a list or type a request first.")
         else:
-            with st.spinner("Agent is thinking and calling its tool..."):
-                try:
-                    st.session_state.agent_out = ask_agent(q, min_margin)
-                except Exception as e:
-                    st.error(f"Something went wrong, please ask again. ({e})")
+            st.session_state.pop("agent_result", None)
+            status = st.status("Agent is working...", expanded=True)
+            n = {"i": 0}
 
-    out = st.session_state.get("agent_out")
-    if out:
-        answer, calls = out
-        st.markdown(answer)
-        for name, args, result in calls:
-            st.caption(f" Tool called: `{name}({args})`")
-            if result["items"]:
-                st.dataframe(pd.DataFrame(result["items"]), hide_index=True, width="stretch")
-            with st.expander("Raw tool result (what Python calculated)"):
-                st.json(result)
+            def show(step):
+                n["i"] += 1
+                status.write(f"**Step {n['i']}: `{step['tool']}`**  \n{_describe(step)}")
+
+            try:
+                st.session_state.agent_result = run_agent(
+                    txt, min_margin, on_step=show, instruction=req)
+                status.update(label="Agent finished", state="complete", expanded=False)
+            except Exception:
+                status.update(label="Agent stopped", state="error")
+                st.error("The AI service is busy or its free limit was reached. "
+                         "Please wait a minute and run the agent again.")
+
+    res = st.session_state.get("agent_result")
+    if res:
+        st.markdown(res["answer"])
+        with st.expander("What the agent did (raw tool calls)"):
+            for i, s in enumerate(res["steps"], 1):
+                st.markdown(f"**{i}. {s['tool']}** `{s['args']}`")
+                st.json(s["result"], expanded=False)
+        if res["state"].get("matches"):
+            if st.button(" Send this analysis to Review & approve", key="agent_send"):
+                st.session_state.matches = res["state"]["matches"]
+                st.session_state.pop("result", None)
+                st.success("Done. Open the Review & approve tab to approve.")
+                st.rerun()
