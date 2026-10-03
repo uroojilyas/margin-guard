@@ -39,13 +39,28 @@ if top2.button("← Home"):
 st.caption("Demo with sample shop data. The owner approves every change.")
 
 with st.sidebar:
-    st.header("Settings")
-    min_margin = st.slider("Minimum margin %", 5, 40, 15) / 100
-    if st.button("Reset sample shop"):
+    ui.sidebar_head()
+
+    _prods = load_products()
+    _avg = sum((p["price"] - p["cost"]) / p["price"] for p in _prods) / len(_prods) * 100
+    _units = sum(p["monthly_units"] for p in _prods)
+    ui.sidebar_shop(len(_prods), _avg, _units)
+
+    st.markdown('<div class="sb-label">Target margin</div>', unsafe_allow_html=True)
+    min_margin = st.slider(
+        "Minimum margin %", 5, 40, 15, label_visibility="collapsed",
+        help="Items earning less than this are flagged LOW. Negative margin means LOSS.",
+    ) / 100
+    st.caption(f"Flag items earning less than {min_margin*100:.0f}% profit.")
+
+    st.markdown('<div class="sb-label">Demo</div>', unsafe_allow_html=True)
+    if st.button("Reset sample shop", use_container_width=True):
         seed()
         for k in ("matches", "result"):
             st.session_state.pop(k, None)
         st.rerun()
+
+    ui.sidebar_steps()
 
 
 def load_sample():

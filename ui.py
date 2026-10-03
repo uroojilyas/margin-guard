@@ -101,3 +101,74 @@ def risk_card(product, status, margin_after, new_cost, price, suggested, erosion
         f"<span>Cost now {new_cost:.0f} | price {price:.0f} | margin {margin_after:.1f}% "
         f"| suggested <b>{suggested:.0f}</b> EGP | -{erosion:,} EGP/month</span></div>"
     )
+
+SIDEBAR_CSS = """
+<style>
+section[data-testid="stSidebar"] {
+  background: linear-gradient(180deg, #0f1730 0%, #0b1020 100%);
+  border-right: 1px solid #ffffff14;}
+section[data-testid="stSidebar"] .block-container {padding-top:1rem;}
+.sb-brand {display:flex; align-items:center; gap:.7rem; padding:.4rem 0 1rem;
+  border-bottom:1px solid #ffffff14; margin-bottom:1rem;}
+.sb-logo {font-size:2rem; filter:drop-shadow(0 0 12px #22d3ee99);}
+.sb-name {font-size:1.25rem; font-weight:800; line-height:1.1;
+  background:linear-gradient(90deg,#22d3ee,#818cf8); -webkit-background-clip:text;
+  background-clip:text; -webkit-text-fill-color:transparent;}
+.sb-sub {font-size:.75rem; color:#8f98bf;}
+.sb-label {font-size:.72rem; letter-spacing:.12em; text-transform:uppercase;
+  color:#7f89b3; margin:1.1rem 0 .5rem; font-weight:700;}
+.sb-card {padding:.9rem 1rem; border-radius:14px; border:1px solid #ffffff18;
+  background:linear-gradient(145deg,#ffffff10,#ffffff05);}
+.sb-shop {font-weight:700; color:#fff; font-size:1rem;}
+.sb-tag {display:inline-block; font-size:.65rem; padding:.1rem .5rem; border-radius:99px;
+  background:#22d3ee22; color:#22d3ee; border:1px solid #22d3ee55; margin-left:.4rem;
+  vertical-align:middle;}
+.sb-grid {display:grid; grid-template-columns:1fr 1fr 1fr; gap:.5rem; margin-top:.8rem;}
+.sb-stat {text-align:center; padding:.5rem .2rem; border-radius:10px; background:#ffffff08;}
+.sb-stat b {display:block; font-size:1.05rem; color:#e6e9f5;}
+.sb-stat span {font-size:.65rem; color:#8f98bf;}
+.sb-step {display:flex; gap:.7rem; align-items:flex-start; margin:.55rem 0;
+  font-size:.85rem; color:#b6bddb;}
+.sb-num {min-width:1.5rem; height:1.5rem; border-radius:50%; display:flex;
+  align-items:center; justify-content:center; font-size:.75rem; font-weight:800;
+  background:linear-gradient(135deg,#22d3ee,#6366f1); color:#fff;}
+.sb-foot {margin-top:1.2rem; padding-top:.8rem; border-top:1px solid #ffffff14;
+  font-size:.7rem; color:#6f789f; line-height:1.5;}
+</style>
+"""
+
+
+def sidebar_head():
+    st.markdown(SIDEBAR_CSS, unsafe_allow_html=True)
+    st.markdown(
+        '<div class="sb-brand"><div class="sb-logo">🛡️</div>'
+        '<div><div class="sb-name">Margin Guard</div>'
+        '<div class="sb-sub">Protect your margins</div></div></div>',
+        unsafe_allow_html=True,
+    )
+
+
+def sidebar_shop(n_products, avg_margin, units):
+    st.markdown(
+        '<div class="sb-label">Your shop</div>'
+        '<div class="sb-card">'
+        '<div class="sb-shop">Mobile Accessories<span class="sb-tag">SAMPLE</span></div>'
+        '<div class="sb-grid">'
+        f'<div class="sb-stat"><b>{n_products}</b><span>Products</span></div>'
+        f'<div class="sb-stat"><b>{avg_margin:.0f}%</b><span>Avg margin</span></div>'
+        f'<div class="sb-stat"><b>{units:,}</b><span>Units/mo</span></div>'
+        '</div></div>',
+        unsafe_allow_html=True,
+    )
+
+
+def sidebar_steps():
+    st.markdown(
+        '<div class="sb-label">How it works</div>'
+        '<div class="sb-step"><div class="sb-num">1</div><div>Paste the supplier list</div></div>'
+        '<div class="sb-step"><div class="sb-num">2</div><div>AI reads and matches products</div></div>'
+        '<div class="sb-step"><div class="sb-num">3</div><div>Python checks every margin</div></div>'
+        '<div class="sb-step"><div class="sb-num">4</div><div>You approve new prices</div></div>'
+        '<div class="sb-foot">Demo with sample data.<br>The owner approves every change.<br>',
+        unsafe_allow_html=True,
+    )

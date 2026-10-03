@@ -100,19 +100,7 @@ How these are calculated:
 
 **Time saved (estimate):** Repricing the 12-item sample by hand is estimated at about 30 minutes (roughly 2.5 minutes per item for matching, margin calculation and pricing, plus about 5 minutes to write the customer message). With Margin Guard the same flow takes about 2 minutes.This is an estimate on the sample shop, not a measured result. Real shops with 100+ items would save proportionally more.
 
-## Safety and design choices
-
-- **Human approval:** prices change only after the owner ticks and approves.
-- **Capacity check:** names with different numbers (e.g. `SSD 512GB` vs `SSD 1TB`) are penalised in matching so they are not mixed up.
-- **Uncertain matches** are flagged `needs_confirm` and start unticked.
-- **LLM never does the math.** It reads, matches and writes. Python computes every number.
-- **No automatic sending:** the app never messages anyone. The owner copies the drafted message into WhatsApp.
-
 ## Tech stack
 
 Python · Groq (openai/gpt-oss-120b) · Pandas · SQLite · rapidfuzz · Streamlit · Plotly 
 
-
-## Author
-
-Urooj Ilyas, Pakistan.
