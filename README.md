@@ -1,6 +1,6 @@
 # 🛡️ Margin Guard
 
-**An AI agent that catches supplier price increases before they silently eat a small shop's margin. The agent analyzes; the shop owner approves every change.**
+**An AI agent that spots supplier price increases before they silently eat a small shop's margin. The agent analyzes; the shop owner approves every change.**
 Built for *Agents at Work, 1st Edition* (Egyptian SME agent hackathon).
 
 - **Live demo:** 
@@ -39,7 +39,7 @@ Different requests lead to different tool calls. For example, a what-if question
 | All margin math, rounding, totals, what-if calculations | Python (exact and debuggable) |
 | Approving every price change | The shop owner |
 
-## Quick start (about 5 minutes)
+## Quick start
 
 Requires Python 3.10+ and a free Groq API key from <https://console.groq.com> (no card needed).
 
