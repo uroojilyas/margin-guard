@@ -2,7 +2,9 @@ import streamlit as st
 
 CSS = """
 <style>
-#MainMenu, footer, header {visibility:hidden;}
+#MainMenu, footer {visibility:hidden;}
+[data-testid="stToolbar"], [data-testid="stDecoration"] {display:none;}
+header {background:transparent !important;}
 .block-container {padding-top:1.5rem; max-width:1150px; position:relative; z-index:1;}
 .stApp {background: radial-gradient(1200px 600px at 10% -10%, #1b2a6b55, transparent),
         radial-gradient(900px 500px at 100% 0%, #0e7490440, transparent), #0b1020;}

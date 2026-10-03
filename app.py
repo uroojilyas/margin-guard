@@ -14,7 +14,8 @@ import os
 if not os.path.exists("shop.db"):
     seed()
 
-st.set_page_config(page_title="Margin Guard", page_icon="🛡️", layout="wide")
+st.set_page_config(page_title="Margin Guard", page_icon="🛡️", layout="wide",
+                   initial_sidebar_state="expanded")
 ui.inject()
 
 if "page" not in st.session_state:
@@ -173,7 +174,7 @@ with tab1:
             st.code(res["msg"], language=None)
             st.link_button("Open in WhatsApp", "https://wa.me/?text=" + quote(res["msg"]))
             st.caption("AI-generated. The owner reviews and sends it. The app never sends messages by itself.")
-            
+
 # ---------- what-if agent tab ----------
 with tab3:
     st.subheader(" Ask the agent (what-if)")
