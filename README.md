@@ -29,7 +29,7 @@ Egyptian SMEs buy from suppliers whose prices follow the dollar. Suppliers send 
 
 | Part | Responsible |
 |---|---|
-| Reading messy text, resolving unclear matches, writing messages, understanding what-if questions | LLM (Groq, Llama 3.3 70B) |
+| Reading messy text, resolving unclear matches, writing messages, understanding what-if questions | LLM (Groq, openai/gpt-oss-120b) |
 | All margin math, rounding, totals | Python (exact and debuggable) |
 | Approving every price change | The shop owner |
 
@@ -98,8 +98,7 @@ How these are calculated:
 
 **Assumptions:** monthly units come from the sample data, and sales volume is assumed to stay the same after repricing. These are demo figures, not measurements from a real shop.
 
-**Time saved:** repricing the 12-item sample by hand took me [X] minutes. With Margin Guard it took [Y] minutes. (Timed by me on the sample shop.)
-
+**Time saved (estimate):** Repricing the 12-item sample by hand is estimated at about 30 minutes (roughly 2.5 minutes per item for matching, margin calculation and pricing, plus about 5 minutes to write the customer message). With Margin Guard the same flow takes about 2 minutes.This is an estimate on the sample shop, not a measured result. Real shops with 100+ items would save proportionally more.
 
 ## Safety and design choices
 
@@ -111,7 +110,7 @@ How these are calculated:
 
 ## Tech stack
 
-Python · Groq (Llama 3.3 70B) · Pandas · SQLite · rapidfuzz · Streamlit · Plotly · Git/GitHub
+Python · Groq (openai/gpt-oss-120b) · Pandas · SQLite · rapidfuzz · Streamlit · Plotly 
 
 
 ## Author
