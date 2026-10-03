@@ -10,6 +10,9 @@ from core.margins import build_report, summary
 from core.db import apply_changes
 from data.seed import seed
 
+import os
+if not os.path.exists("shop.db"):
+    seed()
 
 st.set_page_config(page_title="Margin Guard", page_icon="🛡️", layout="wide")
 ui.inject()
@@ -71,10 +74,15 @@ with tab1:
         if not text:
             st.error("Paste a list first (or click Load sample).")
         else:
-            with st.spinner("Reading the list and matching products..."):
-                parsed = parse_supplier_list(text)
-                st.session_state.matches = match_items(parsed, load_products())
-            st.session_state.pop("result", None)
+            try:
+                with st.spinner("Reading the list and matching products..."):
+                    parsed = parse_supplier_list(text)
+                    st.session_state.matches = match_items(parsed, load_products())
+                st.session_state.pop("result", None)
+            except Exception:
+                st.error("The AI service is busy or its free limit was reached. "
+                         "Please wait a minute and click Analyze again.")
+                st.stop()
 
     if "matches" in st.session_state:
         products = load_products()
@@ -165,7 +173,7 @@ with tab1:
             st.code(res["msg"], language=None)
             st.link_button("Open in WhatsApp", "https://wa.me/?text=" + quote(res["msg"]))
             st.caption("AI-generated. The owner reviews and sends it. The app never sends messages by itself.")
-
+            
 # ---------- what-if agent tab ----------
 with tab3:
     st.subheader(" Ask the agent (what-if)")
