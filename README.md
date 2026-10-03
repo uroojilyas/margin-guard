@@ -18,8 +18,8 @@ Egyptian SMEs buy from suppliers whose prices follow the dollar. Suppliers send 
 
 1. **Paste** the supplier's new price list (WhatsApp-style text, Arabic or English).
 2. **Read:** an LLM (Groq / Llama) turns the messy text into a clean table (product, new cost).
-3. **Match:** supplier names are matched to the shop's products (`شاحن سامسونج 25 واط` = `Samsung 25W Charger`). Easy matches are done by code (Arabic normalisation + `rapidfuzz`). Hard ones go to the LLM and are flagged **needs_confirm** for the owner.
-4. **Calculate:** plain Python computes margins on the new cost and flags items as `LOSS` (negative margin), `LOW` (below the owner's minimum margin) or `OK`.
+3. **Match:** supplier names are matched to the shop's products (`شاحن سامسونج 25 واط` = `Samsung 25W Charger`). Easy matches are done by code (Arabic normalisation + `rapidfuzz`). Hard ones go to the LLM and are flagged **needs_confirm** for the owner. The Arabic product name in the shop inventory is optional and only helps match Arabic supplier lists.
+4. **Calculate:** plain Python computes margins on the new cost and flags items as `LOSS` (negative margin), `LOW` (below the owner's minimum margin, set with the slider in the sidebar) or `OK`.
 5. **Suggest:** new selling prices that reach the minimum margin, with scale-aware rounding (never rounds down).
 6. **Approve:** the owner ticks the rows to apply. **Nothing changes without this click.** Approved prices are saved in SQLite.
 7. **Announce:** the agent drafts a customer price-update message (English + Arabic) to copy into WhatsApp.
@@ -69,7 +69,8 @@ streamlit run app.py
 4. Rows marked `needs_confirm` start unticked. Check that the supplier name matches the product, then tick them if correct. You can edit suggested prices.
 5. Click **Approve selected and update prices** to get the customer message.
 6. Open **Ask the agent** and try: *If the dollar rises 5%, which items start losing money?*
-7. To run the demo again, click **Reset sample shop** in the sidebar (approving saves the new costs, so the same list would show nothing the second time).
+7. **Use your own data:** in the **Shop inventory** tab, download the CSV template, fill in your products (name, optional Arabic name, cost, price, monthly_units), upload it and click **Use this inventory**. On the shared live demo this replaces the shared sample database, so click **Reset sample shop** afterwards to restore the demo data.
+8. To run the demo again, click **Reset sample shop** in the sidebar (approving saves the new costs, so the same list would show nothing the second time).
 
 ### What you can ask the agent
 
@@ -98,9 +99,8 @@ How these are calculated:
 
 **Assumptions:** monthly units come from the sample data, and sales volume is assumed to stay the same after repricing. These are demo figures, not measurements from a real shop.
 
-**Time saved (estimate):** Repricing the 12-item sample by hand is estimated at about 30 minutes (roughly 2.5 minutes per item for matching, margin calculation and pricing, plus about 5 minutes to write the customer message). With Margin Guard the same flow takes about 2 minutes.This is an estimate on the sample shop, not a measured result. Real shops with 100+ items would save proportionally more.
+**Time saved (estimate):** Repricing the 12-item sample by hand is estimated at about 30 minutes (roughly 2.5 minutes per item for matching, margin calculation and pricing, plus about 5 minutes to write the customer message). With Margin Guard the same flow takes about 2 minutes. This is an estimate on the sample shop, not a measured result. Real shops with 100+ items would save proportionally more.
 
 ## Tech stack
 
 Python · Groq (openai/gpt-oss-120b) · Pandas · SQLite · rapidfuzz · Streamlit · Plotly 
-

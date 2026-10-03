@@ -7,7 +7,7 @@ import ui
 from core.llm import parse_supplier_list, generate_message, ask_agent
 from core.matcher import load_products, match_items
 from core.margins import build_report, summary
-from core.db import apply_changes
+from core.db import apply_changes, replace_products
 from data.seed import seed
 
 import os
@@ -19,7 +19,7 @@ st.set_page_config(page_title="Margin Guard", page_icon="🛡️", layout="wide"
 ui.inject()
 
 if "page" not in st.session_state:
-    st.session_state.page = "landing"
+    st.session_state.page = st.query_params.get("page", "landing")
 
 # ======================= LANDING =======================
 if st.session_state.page == "landing":
@@ -27,6 +27,7 @@ if st.session_state.page == "landing":
     _, mid, _ = st.columns([2, 1.2, 2])
     if mid.button("Get Started  →", type="primary", use_container_width=True):
         st.session_state.page = "app"
+        st.query_params["page"] = "app"
         st.rerun()
     st.stop()
 
@@ -35,6 +36,7 @@ top1, top2 = st.columns([6, 1])
 top1.markdown("## 🛡️ Margin Guard")
 if top2.button("← Home"):
     st.session_state.page = "landing"
+    st.query_params["page"] = "landing"
     st.rerun()
 st.caption("Demo with sample shop data. The owner approves every change.")
 
@@ -74,8 +76,40 @@ tab1, tab2, tab3 = st.tabs([" Analyze", " Shop inventory", " Ask the agent"])
 # ---------- inventory tab ----------
 with tab2:
     st.subheader("Shop inventory (current cost and selling price)")
-    inv = pd.DataFrame(load_products()).drop(columns=["id"])
+    if st.session_state.get("inv_msg"):
+        st.success(st.session_state.pop("inv_msg"))
+
+    inv = pd.DataFrame(load_products())[["name", "name_ar", "cost", "price", "monthly_units"]]
+    inv.columns = ["Product", "Arabic name (optional)", "Cost (EGP)",
+                   "Selling price (EGP)", "Units sold / month"]
     st.dataframe(inv, hide_index=True, width="stretch")
+    st.caption("The Arabic name is optional. It helps the agent match Arabic supplier lists "
+               "to your products. Leave it empty if you don't have one.")
+
+    st.markdown("#### Use your own shop data")
+    st.caption("Upload a CSV with columns: name, name_ar (optional), cost, price, monthly_units. "
+               "In Excel use Save As → CSV UTF-8.")
+    template = "name,name_ar,cost,price,monthly_units\nSamsung 25W Charger,شاحن سامسونج 25W,350,420,40\n"
+    st.download_button("⬇Download CSV template", template.encode("utf-8-sig"),
+                       file_name="inventory_template.csv", mime="text/csv")
+    up = st.file_uploader("Upload inventory CSV", type="csv", key="inv_upload")
+    if up is not None:
+        try:
+            try:
+                new_df = pd.read_csv(up, encoding="utf-8-sig")
+            except UnicodeDecodeError:
+                up.seek(0)
+                new_df = pd.read_csv(up, encoding="cp1256")
+            st.write("Preview:")
+            st.dataframe(new_df.head(10), hide_index=True, width="stretch")
+            if st.button("Use this inventory", type="primary", key="use_inv"):
+                n = replace_products(new_df)
+                for k in ("matches", "result"):
+                    st.session_state.pop(k, None)
+                st.session_state.inv_msg = f"Loaded {n} products from your file. Go to the Analyze tab."
+                st.rerun()
+        except Exception as e:
+            st.error(f"Could not read the file: {e}")
 
 # ---------- analyze tab ----------
 with tab1:
