@@ -1,7 +1,6 @@
 # 🛡️ Margin Guard
 
 **An AI agent that spots supplier price increases before they silently eat a small shop's margin. The agent analyzes; the shop owner approves every change.**
-Built for *Agents at Work, 1st Edition* (Egyptian SME agent hackathon).
 
 **Live demo:** https://margin-guard.streamlit.app/
 
